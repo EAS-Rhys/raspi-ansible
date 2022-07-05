@@ -2,6 +2,7 @@
 - hosts: all
   become: true
 
+# Needs better use of vars
   vars:
     pi_buster: pi_buster_motion_4.3.2-1_armhf.deb
     pip: get-pip.py
@@ -11,18 +12,20 @@
     - name: "install update"
       apt:
         update_cache: true
-        cache_valid_time: 3600
-        force_apt_get: true
+        cache_valid_time: 3600                            # What does this do?
+        force_apt_get: true                               # Why?
 
     - name: "install upgrade"
       apt:
-        upgrade: yes
+        upgrade: yes                                      # Why are you doing an upgrade?
         update_cache: yes
         cache_valid_time: 3600
 
+# These need grouping for all packages that belong to the same role or grouping of items
+
     - name: "install ffmpeg"
       apt:
-        update_cache: yes
+        update_cache: yes                                 # Why arent you using cache valid time here but are above?
         name: ffmpeg
         state: present
 
@@ -46,12 +49,16 @@
 
     - name: "wget download for motion"
       get_url:
+      # Why isnt the URL ( The thing that is likely to change ) not a variable but the file, which can be called anything is?
         url: https://github.com/Motion-Project/motion/releases/download/release-4.3.2/pi_buster_motion_4.3.2-1_armhf.deb
         dest: /tmp/{{ pi_buster }}
 
     - name: Install Motion
       apt:
+        # Why are you pulling the deb first and not just using it here
         deb: /tmp/{{ pi_buster }}
+
+# The below 2 systemd items should just be one
 
     - name: "sys stop motion"
       systemd:
@@ -80,9 +87,12 @@
         url: https://bootstrap.pypa.io/pip/2.7/get-pip.py
         dest: /tmp/{{ pip }}
 
+# Needs a guard to ensure this doesnt run everytime if it's already installed - https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html#parameter-creates
+# Good practice to register exit code and use it in dependent steps to ensure robustness
     - name: run python 2 command
       command: python2 /tmp/get-pip.py
 
+# Grouping again
     - name: "install libssl-dev"
       apt:
         update_cache: yes
@@ -107,6 +117,7 @@
         name: zlib1g-dev
         state: present
 
+# Use your registered output as a condition here
     - name: pip install motioneye
       pip:
         name: motioneye
