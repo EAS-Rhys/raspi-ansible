@@ -1,0 +1,114 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    pi_buster: pi_buster_motion_4.3.2-1_armhf.deb
+    pip: get-pip.py
+    ansible_python_interpreter: /usr/bin/python
+
+  tasks:
+    - name: "install update"
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+        force_apt_get: true
+
+    - name: "install upgrade"
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: "install ffmpeg"
+      apt:
+        update_cache: yes
+        name: ffmpeg
+        state: present
+
+    - name: "install libmariadb3"
+      apt:
+        update_cache: yes
+        name: libmariadb3
+        state: present
+
+    - name: "install libpq5"
+      apt:
+        update_cache: yes
+        name: libpq5
+        state: present
+
+    - name: "install libmicrohttpd12"
+      apt:
+        update_cache: yes
+        name: libmicrohttpd12
+        state: present
+
+    - name: "wget download for motion"
+      get_url:
+        url: https://github.com/Motion-Project/motion/releases/download/release-4.3.2/pi_buster_motion_4.3.2-1_armhf.deb
+        dest: /tmp/{{ pi_buster }}
+
+    - name: Install Motion
+      apt:
+        deb: /tmp/{{ pi_buster }}
+
+    - name: "sys stop motion"
+      systemd:
+        name: motion
+        state: stopped
+
+    - name: sys disable motion
+      systemd:
+        name: motion
+        enabled: no
+
+    - name: get python2 installed
+      apt:
+        update_cache: yes
+        name: python2
+        state: present
+
+    - name: get python-dev-is-python2
+      apt:
+        update_cache: yes
+        name: python-dev-is-python2
+        state: present
+
+    - name: "wget pip"
+      get_url:
+        url: https://bootstrap.pypa.io/pip/2.7/get-pip.py
+        dest: /tmp/{{ pip }}
+
+    - name: run python 2 command
+      command: python2 /tmp/get-pip.py
+
+    - name: "install libssl-dev"
+      apt:
+        update_cache: yes
+        name: libssl-dev
+        state: present
+
+    - name: "install libcurl4-openssl-dev"
+      apt:
+        update_cache: yes
+        name: libcurl4-openssl-dev
+        state: present
+
+    - name: "install libjpeg-dev"
+      apt:
+        update_cache: yes
+        name: libjpeg-dev
+        state: present
+
+    - name: "install zlib1g-dev"
+      apt:
+        update_cache: yes
+        name: zlib1g-dev
+        state: present
+
+    - name: pip install motioneye
+      pip:
+        name: motioneye
+        executable: pip2
+        state: present
